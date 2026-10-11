@@ -60,12 +60,11 @@ public class AES {
 			throw new Error("la clé n'est pas de la bonne taille");
 		}
 		tailleCleMaitre = tailleCle;
-		switch (tailleCleMaitre) {
-		case 128: 
+		if (tailleCle == 128) {
 			nbRonde = 10;
-		case 192: 
+		} else if (tailleCle == 192) {
 			nbRonde = 12;
-		case 256:
+		} else {
 			nbRonde = 14;
 		}
 		this.masterkey = generateMasterKey();
@@ -193,7 +192,7 @@ public class AES {
 	    }
 	    return blocs;
 	}
-
+	
 	public int[] recollageDesBlocs(int[][] blocks) {
 		if (blocks == null || blocks.length == 0 || blocks[0].length != 128) {
 			return new int[0];
