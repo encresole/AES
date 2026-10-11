@@ -185,9 +185,9 @@ public class AES {
 	                if (indice < bits.length) {
 	                    bitsDeLOctet[k] = bits[indice];
 	                }
-	            }
 	            int octet = ByteOfBitsToInt(bitsDeLOctet);
 	            blocs[i][j] = octet;
+	            }
 	        }
 	    }
 	    return blocs;
