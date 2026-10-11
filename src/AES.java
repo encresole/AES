@@ -1,3 +1,4 @@
+import java.util.Iterator;
 import java.util.Random;
 
 public class AES {
@@ -52,10 +53,11 @@ public class AES {
 	private int nbRonde;
 	private int[] masterkey;
 	private int[] keys;
+	private int[][] blocs;
 	
-	public AES(int tailleCle) throws Exception {
-		if (tailleCle != 128 || tailleCle != 192 || tailleCle != 256) {
-			throw new Exception("la clé n'est pas de la bonne taille");
+	public AES(int tailleCle)  {
+		if (tailleCle != 128 && tailleCle != 192 && tailleCle != 256) {
+			throw new Error("la clé n'est pas de la bonne taille");
 		}
 		tailleCleMaitre = tailleCle;
 		switch (tailleCleMaitre) {
@@ -67,10 +69,10 @@ public class AES {
 			nbRonde = 14;
 		}
 		this.masterkey = generateMasterKey();
-		this.keys=createKey(masterkey);
+		this.keys = createKeys();
 	}
 	
-	private int[] stringToBits(String message) {
+	public int[] stringToBits(String message) {
 		if (message == null) {
 			return new int[0];
 		}
@@ -85,7 +87,7 @@ public class AES {
 		return bits;
 	}
 	
-	private String bitsToString(int[] bits) {
+	public String bitsToString(int[] bits) {
 		if (bits == null || bits.length % 8 != 0) {
 			return "";
 		}
@@ -103,8 +105,21 @@ public class AES {
 		}
 		return message.toString();
 	}
+	
+	public int ByteOfBitsToInt(int[] bits) {
+		if 	(bits.length!=8) {
+			throw new Error("Il faut avoir 8 bits");
+		}
+		int result = 0;
+		for (int i = 0; i < bits.length; i++) {
+			if (bits[i]==1) {
+				result += Math.pow(2, bits.length-i-1);
+			}
+		}
+		return result;
+	}
 
-	private int[] generateMasterKey() {
+	public int[] generateMasterKey() {
 	    Random random = new Random();
 	    int[] masterKeyBits = new int[tailleCleMaitre];
 	    for (int i = 0; i < tailleCleMaitre; i++) {
@@ -113,58 +128,73 @@ public class AES {
 	    return masterKeyBits;
 	}
 
-	private int[] createKey(int[] masterKeyBits) {
-		if (masterKeyBits == null || masterKeyBits.length != masterkey) {
-			return new int[0];
-		}
+	public int[] createKeys() {
+		int[][] decoupe = new int[tailleCleMaitre/32][32];
 		
-		int[] keyBits = new int[masterkey];
-		for (int i = 0; i < masterkey; i++) {
-			keyBits[i] = masterKeyBits[i];
-		}
-		return keyBits;
+		
+		return new int[1];
 	}
-
-	private int[] bourrage(int[] keyBits) {
-		if (keyBits == null || keyBits.length != masterkey) {
-			return new int[0];
-		}
-		
-		int[] bourrageBits = new int[masterkey];
-		for (int i = 0; i < masterkey; i++) {
-			bourrageBits[i] = keyBits[i] ^ 1;
-		}
-		return bourrageBits;
-	}
-
-	private int[] debourrage(int[] bourrageBits) {
-		if (bourrageBits == null || bourrageBits.length != masterkey) {
-			return new int[0];
-		}
-		
-		int[] keyBits = new int[masterkey];
-		for (int i = 0; i < masterkey; i++) {
-			keyBits[i] = bourrageBits[i] ^ 1;
-		}
-		return keyBits;
-	}
-
-	private int[][] decoupe_en_blocs(int[] bits) {
-		if (bits == null || bits.length % 128 != 0) {
-			return new int[0][0];
-		}
-		
-		int numBlocks = bits.length / 128;
-		int[][] blocks = new int[numBlocks][128];
-		for (int i = 0; i < numBlocks; i++) {
-			for (int j = 0; j < 128; j++) {
-				blocks[i][j] = bits[i * 128 + j];
+	
+	public int[] bourrage(int[] messageBits) {
+		int tailleOctets = messageBits.length / 8;
+		int nbPadding = 16 - (tailleOctets % 16);
+		int[] resultat = new int[messageBits.length + nbPadding * 8];
+		System.arraycopy(messageBits, 0, resultat, 0, messageBits.length);
+		for (int i = tailleOctets; i < tailleOctets + nbPadding; i++) {
+			for (int bit = 0; bit < 8; bit++) {
+				resultat[i * 8 + bit] = (nbPadding >> (7 - bit)) & 1;
 			}
 		}
-		return blocks;
+		return resultat;
 	}
 
-	private int[] recollage_des_bloc(int[][] blocks) {
+
+	public int[] debourrage(int[] messageBits) {
+		int tailleOctets = messageBits.length / 8;
+		int nbPadding = 0;
+		for (int bit = 0; bit < 8; bit++) {
+			nbPadding = (nbPadding << 1) | messageBits[messageBits.length - 8 + bit];
+		}
+		if (nbPadding < 1 || nbPadding > 16) {
+			throw new IllegalArgumentException("Bourrage invalide");
+		}
+		for (int i = tailleOctets - nbPadding; i < tailleOctets; i++) {
+			int valeur = 0;
+
+			for (int bit = 0; bit < 8; bit++) {
+				valeur = (valeur << 1) | messageBits[i * 8 + bit];
+			}
+
+			if (valeur != nbPadding) {
+				throw new IllegalArgumentException("Bourrage invalide");
+			}
+		}
+		int nouvelleTaille = messageBits.length - nbPadding * 8;
+		int[] resultat = new int[nouvelleTaille];
+		System.arraycopy(messageBits, 0, resultat, 0, nouvelleTaille);
+		return resultat;
+	}
+
+
+	public int[][] decoupageEnBlocs(int[] bits) {
+	    int[][] blocs = new int[(bits.length + 127) / 128][16];
+	    for (int i = 0; i < blocs.length; i++) {
+	        for (int j = 0; j < 16; j++) {
+	            int[] bitsDeLOctet = new int[8];
+	            for (int k = 0; k < 8; k++) {
+	                int indice = i * 128 + j * 8 + k;
+	                if (indice < bits.length) {
+	                    bitsDeLOctet[k] = bits[indice];
+	                }
+	            }
+	            int octet = ByteOfBitsToInt(bitsDeLOctet);
+	            blocs[i][j] = octet;
+	        }
+	    }
+	    return blocs;
+	}
+
+	public int[] recollageDesBlocs(int[][] blocks) {
 		if (blocks == null || blocks.length == 0 || blocks[0].length != 128) {
 			return new int[0];
 		}
@@ -178,7 +208,7 @@ public class AES {
 		return bits;
 	}
 
-	private int[] xor(int[] bits1, int[] bits2) {
+	public int[] xor(int[] bits1, int[] bits2) {
 		if (bits1 == null || bits2 == null || bits1.length != bits2.length) {
 			return new int[0];
 		}
@@ -190,7 +220,7 @@ public class AES {
 		return result;
 	}
 
-	private int[] addRoundKey(int[] state, int[] roundKey) {
+	public int[] addRoundKey(int[] state, int[] roundKey) {
 		if (state == null || roundKey == null || state.length != roundKey.length) {
 			return new int[0];
 		}
@@ -202,7 +232,7 @@ public class AES {
 		return result;
 	}
 
-	private int[] subBytes(int[] state) {
+	public int[] subBytes(int[] state) {
 		if (state == null || state.length != 128) {
 			return new int[0];
 		}
@@ -214,7 +244,7 @@ public class AES {
 		return result;
 	}
 
-	private int[] subByteInv(int[] state) {
+	public int[] subByteInv(int[] state) {
 		if (state == null || state.length != 128) {
 			return new int[0];
 		}
@@ -226,7 +256,7 @@ public class AES {
 		return result;
 	}
 
-	private int[] shiftRows(int[] state) {
+	public int[] shiftRows(int[] state) {
 		if (state == null || state.length != 128) {
 			return new int[0];
 		}
@@ -238,7 +268,7 @@ public class AES {
 		return result;
 	}
 
-	private int[] shiftRowsInv(int[] state) {
+	public int[] shiftRowsInv(int[] state) {
 		if (state == null || state.length != 128) {
 			return new int[0];
 		}
@@ -272,7 +302,7 @@ public class AES {
 			state[i] = (i < plaintext.length) ? plaintext[i] : 0;
 		}
 		
-		state = addRoundKey(state, masterKeyBits);
+		state = addRoundKey(state, masterkey);
 		state = subBytes(state);
 		state = shiftRows(state);
 		state = mixColumns(state);
@@ -290,10 +320,9 @@ public class AES {
 			state[i] = (i < ciphertext.length) ? ciphertext[i] : 0;
 		}
 		
-		state = mixColumns(state);
 		state = shiftRowsInv(state);
 		state = subByteInv(state);
-		state = addRoundKey(state, masterKeyBits);
+		state = addRoundKey(state, masterkey);
 		
 		return state;
 	}
