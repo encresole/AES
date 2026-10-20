@@ -1,438 +1,84 @@
-# Projet Crypto --- AES
+# Projet AES (TP Crypto, Réseaux 3, L3 Informatique)
 
-Implémentation progressive de l'algorithme AES en Java pour le TP de
-Réseaux 3.
+Implémentation pédagogique de l'algorithme de chiffrement **AES** en Java, avec des clés de **128, 192 ou 256 bits**.
 
-Le projet commence par **AES-128**, puis pourra être étendu à AES-192 et
-AES-256.
+Le projet est également disponible sur GitHub : https://www.github.com/encresole/AES
 
-## État actuel
+## À quoi ça sert
 
-### Déjà fait
+AES (Advanced Encryption Standard) est un algorithme de chiffrement symétrique par blocs : la même clé sert à chiffrer et à déchiffrer un message. Ce projet permet de :
 
--   [x] Constructeur `AES(128)`
--   [x] `stringToBits(String message)`
--   [x] `bitsToString(int[] bits)`
--   [x] Découpage en blocs de 128 bits
--   [x] Recollage des blocs
--   [x] `xor(...)`
--   [x] `addRoundKey(...)` (opération XOR)
--   [x] Structure générale de `crypte()` / `decrypte()`
+- chiffrer un texte (accents compris) et obtenir un tableau de bits ;
+- déchiffrer ce tableau de bits pour retrouver le texte d'origine ;
+- tester chaque étape de l'algorithme avec `TestAES` ;
+- utiliser le tout depuis une petite interface graphique (`View`).
 
-### À corriger / compléter
+## Contenu du projet
 
--   [ ] Génération réellement aléatoire de la clé maître
--   [ ] Bourrage/débourrage conforme au projet
--   [ ] S-box AES
--   [ ] S-box inverse AES
--   [ ] `createKeys()` / Key Expansion
--   [ ] `RotWord`
--   [ ] `SubWord`
--   [ ] `Rcon`
--   [ ] `subBytes()`
--   [ ] `subByteInv()`
--   [ ] `shiftRows()`
--   [ ] `shiftRowsInv()`
--   [ ] Multiplication dans `GF(2^8)`
--   [ ] `deux_a()`
--   [ ] `trois_a()`
--   [ ] `neuf_a()`
--   [ ] `onze_a()`
--   [ ] `treize_a()`
--   [ ] `quatorze_a()`
--   [ ] `prodAu()`
--   [ ] `prodAuInv()`
--   [ ] `mixColumns()`
--   [ ] `crypte(String message)`
--   [ ] `decrypte(int[] messCode)`
--   [ ] Classe `TestAES`
--   [ ] Tests de chaque méthode
--   [ ] Javadoc
--   [ ] Rendre privées les méthodes internes
--   [ ] Interface graphique finale
--   [ ] Extension AES-192
--   [ ] Extension AES-256
+| `AES.java` : La classe AES : clés, bourrage, SubBytes, ShiftRows, MixColumns, chiffrement, déchiffrement |
+| `TestAES.java` : Classe de test : affiche `[OK]`, `[ECHEC]` ou `[SKIP]` pour chaque test |
+| `View.java` : Interface graphique (Swing) pour chiffrer et déchiffrer un message |
 
-## Ordre conseillé
+## Prérequis
 
-Le sujet fournit quasiment cet ordre. Il vaut mieux respecter cette
-progression afin de pouvoir tester chaque morceau indépendamment.
+- **Eclipse IDE for Java Developers** (https://www.eclipse.org/downloads/)
+- **JDK 11 ou plus récent** (nécessaire pour `TestAES`, qui utilise `String.repeat`)
 
-### 1. Conversion et manipulation des données
+## Récupérer le projet
 
-``` text
-AES
-stringToBits
-bitsToString
-genereMasterKey
-bourrage
-debourrage
-decoupage_en_blocs
-recollage_des_bloc
-xor
+Vous pouvez soit télécharger les fichiers depuis GitHub (bouton **Code > Download ZIP** sur https://www.github.com/encresole/AES), soit cloner le dépôt directement depuis Eclipse (voir la méthode 3 ci-dessous).
+
+## Importer le projet dans Eclipse
+
+### Méthode 1 : créer un projet et y copier les fichiers (la plus simple)
+
+1. Dans Eclipse : **File > New > Java Project**.
+2. Donnez un nom (par exemple `ProjetAES`), vérifiez que le JRE est en version 11 ou plus, puis **Finish**.
+3. Dans l'explorateur de projet, faites un clic droit sur le dossier **`src`** puis **Import... > General > File System > Next**.
+4. Cliquez sur **Browse** et choisissez le dossier qui contient `AES.java`, `TestAES.java` et `View.java`.
+5. Cochez les trois fichiers `.java` puis **Finish**.
+6. Les trois fichiers apparaissent dans `src > (default package)`.
+
+### Méthode 2 : glisser-déposer
+
+Copiez les trois fichiers `.java` puis collez-les sur le dossier `src` du projet dans Eclipse.
+
+### Méthode 3 : cloner depuis GitHub dans Eclipse
+
+1. **File > Import... > Git > Projects from Git (with smart import) > Next**.
+2. Choisissez **Clone URI**, puis saisissez l'adresse `https://github.com/encresole/AES.git`.
+3. Suivez l'assistant jusqu'à **Finish** : Eclipse télécharge le dépôt et crée le projet.
+
+### Si vous avez reçu un dossier de projet Eclipse complet
+
+**File > Import... > General > Existing Projects into Workspace**, puis sélectionnez le dossier du projet.
+
+## Lancer le projet
+
+Clic droit sur le fichier voulu, puis **Run As > Java Application** :
+
+- `AES.java` : petit exemple dans `main` qui chiffre puis déchiffre `Hello, World!`.
+- `TestAES.java` : lance tous les tests. Un test dont la méthode n'existe pas est marqué `[SKIP]`. Tout est bon lorsque `Tout marche !` s'affiche en bas de la console.
+- `View.java` : ouvre la fenêtre graphique.
+
+### Utiliser l'interface graphique
+
+1. Tapez un message dans la zone du haut puis cliquez sur **Chiffrer** : le résultat s'affiche en hexadécimal.
+2. Copiez ce texte hexadécimal dans la zone du haut puis cliquez sur **Déchiffrer** : le message d'origine réapparaît.
+
+La clé est générée au lancement du programme et reste la même tant que la fenêtre est ouverte : si vous relancez `View`, la clé change et l'ancien texte chiffré ne peut plus être déchiffré.
+
+## Utiliser la classe AES dans votre propre code
+
+```java
+AES aes = new AES(128);                  // 128, 192 ou 256
+int[] chiffre = aes.crypte("Bonjour !"); // bits (0 et 1), multiple de 128
+String clair = aes.decrypte(chiffre);    // "Bonjour !"
 ```
 
-### 2. SubBytes et S-box
+Seuls le constructeur, `crypte` et `decrypte` sont publics. Une mauvaise taille de clé ou un texte chiffré invalide lève une `IllegalArgumentException`.
 
-Commencer par stocker les tables :
+## Remarques
 
-``` java
-private static final int[][] SBOX = ...;
-private static final int[][] SBOX_INV = ...;
-```
-
-Puis implémenter :
-
-``` text
-subBytes
-subByteInv
-```
-
-Test important :
-
-``` text
-subByteInv(subBytes(state)) == state
-```
-
-### 3. Key Expansion
-
-Pour AES-128 :
-
-``` text
-clé maître = 128 bits
-Nk = 4
-Nr = 10
-Nb = 4
-```
-
-La Key Expansion produit :
-
-``` text
-44 mots de 32 bits
-↓
-11 clés de ronde de 128 bits
-
-K0 K1 K2 ... K10
-```
-
-À implémenter :
-
-``` text
-RotWord
-SubWord
-Rcon
-createKeys
-```
-
-### 4. ShiftRows
-
-Représentation du State :
-
-``` text
-a0  a4  a8  a12
-a1  a5  a9  a13
-a2  a6  a10 a14
-a3  a7  a11 a15
-```
-
-Après `ShiftRows` :
-
-``` text
-a0  a4  a8  a12
-a5  a9  a13 a1
-a10 a14 a2  a6
-a15 a3  a7  a11
-```
-
-Tester aussi immédiatement l'inverse :
-
-``` text
-shiftRowsInv(shiftRows(state)) == state
-```
-
-### 5. GF(2\^8)
-
-AES utilise le corps fini `GF(2^8)` avec le polynôme irréductible :
-
-``` text
-x^8 + x^4 + x^3 + x + 1
-```
-
-soit :
-
-``` text
-0x11B
-```
-
-Implémenter les multiplications demandées :
-
-``` text
-deux_a
-trois_a
-neuf_a
-onze_a
-treize_a
-quatorze_a
-```
-
-Puis :
-
-``` text
-prodAu
-prodAuInv
-```
-
-### 6. MixColumns
-
-Pour chaque colonne :
-
-``` text
-02 03 01 01
-01 02 03 01
-01 01 02 03
-03 01 01 02
-```
-
-Les additions sont des XOR et les multiplications sont faites dans
-`GF(2^8)`.
-
-Tester ensuite :
-
-``` text
-prodAuInv(prodAu(state)) == state
-```
-
-### 7. Chiffrement AES-128
-
-Structure à implémenter dans `crypte()` :
-
-``` text
-Plaintext
-    ↓
-AddRoundKey(K0)
-    ↓
-Tours 1 à 9 :
-    SubBytes
-    ShiftRows
-    MixColumns
-    AddRoundKey(Kr)
-    ↓
-Tour 10 :
-    SubBytes
-    ShiftRows
-    AddRoundKey(K10)
-    ↓
-Ciphertext
-```
-
-**Attention : le tour 10 ne contient pas `MixColumns`.**
-
-### 8. Déchiffrement
-
-Utiliser les transformations inverses avec les clés dans l'ordre inverse
-:
-
-``` text
-Ciphertext
-    ↓
-AddRoundKey(K10)
-    ↓
-InvShiftRows
-    ↓
-InvSubBytes
-    ↓
-InvMixColumns
-    ↓
-...
-    ↓
-AddRoundKey(K0)
-    ↓
-Plaintext
-```
-
-## Organisation Java conseillée
-
-Une fois la classe fonctionnelle, la classe `AES` peut être organisée
-ainsi :
-
-``` text
-AES.java
-
-├── Constantes
-│   ├── TAILLE_BLOC
-│   ├── RCON
-│   ├── SBOX
-│   └── SBOX_INV
-│
-├── Attributs
-│   ├── tailleCleMaitre
-│   ├── nbRonde
-│   ├── masterKey
-│   └── keys
-│
-├── Conversion
-│   ├── stringToBits
-│   └── bitsToString
-│
-├── Blocs
-│   ├── bourrage
-│   ├── debourrage
-│   ├── decoupeEnBlocs
-│   └── recollageDesBlocs
-│
-├── Key Expansion
-│   ├── RotWord
-│   ├── SubWord
-│   └── createKeys
-│
-├── Transformations
-│   ├── subBytes
-│   ├── subByteInv
-│   ├── shiftRows
-│   ├── shiftRowsInv
-│   ├── mixColumns
-│   └── mixColumnsInv
-│
-├── GF(2^8)
-│   ├── deux_a
-│   ├── trois_a
-│   ├── neuf_a
-│   ├── onze_a
-│   ├── treize_a
-│   ├── quatorze_a
-│   ├── prodAu
-│   └── prodAuInv
-│
-└── Chiffrement
-    ├── addRoundKey
-    ├── crypte
-    └── decrypte
-```
-
-## Tests
-
-Créer une classe séparée :
-
-``` java
-public class TestAES {
-    public static void main(String[] args) throws Exception {
-        // Tests progressifs
-    }
-}
-```
-
-Ne pas attendre la fin du projet pour tester.
-
-Tester dans cet ordre :
-
-``` text
-conversion
-↓
-clé maître
-↓
-bourrage
-↓
-blocs
-↓
-XOR
-↓
-S-box
-↓
-Key Expansion
-↓
-ShiftRows
-↓
-GF(2^8)
-↓
-MixColumns
-↓
-chiffrement
-↓
-déchiffrement
-```
-
-Un test fondamental à obtenir à la fin est :
-
-``` text
-message
-    ↓
-crypte
-    ↓
-ciphertext
-    ↓
-decrypte
-    ↓
-message original
-```
-
-## Après AES-128
-
-Une fois AES-128 terminé et testé :
-
-### AES-192
-
-``` text
-clé : 192 bits
-Nk : 6
-Nr : 12
-clés de ronde : 13
-mots générés : 52
-```
-
-### AES-256
-
-``` text
-clé : 256 bits
-Nk : 8
-Nr : 14
-clés de ronde : 15
-mots générés : 60
-```
-
-AES-256 possède également une étape supplémentaire de `SubWord` pendant
-la Key Expansion.
-
-## Interface graphique
-
-La GUI vient après l'implémentation de l'algorithme.
-
-Elle pourra utiliser uniquement les méthodes publiques :
-
-``` java
-crypte(String message)
-decrypte(int[] messCode)
-```
-
-Les autres méthodes doivent finalement être `private`.
-
-## Référence rapide
-
-``` text
-AES-128
-Bloc       = 128 bits
-Clé        = 128 bits
-Nb         = 4
-Nk         = 4
-Nr         = 10
-Rounds     = 10
-Round keys = 11
-```
-
-## Règle d'or pour le développement
-
-Ne pas coder tout AES puis tester à la fin.
-
-Chaque fonction doit être testée dès qu'elle est terminée, notamment les
-fonctions inverses :
-
-``` text
-SubBytes → InvSubBytes
-ShiftRows → InvShiftRows
-MixColumns → InvMixColumns
-```
-
-Puis seulement après :
-
-``` text
-crypte → decrypte
-```
+- La clé maître est aléatoire et n'est pas sauvegardée : elle n'existe que pendant la vie de l'objet `AES`.
+- Pour comprendre chaque fonction, voir la fiche d'explication fournie avec le projet.

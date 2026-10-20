@@ -3,102 +3,80 @@ import javax.swing.*;
 
 public class View extends JFrame {
 
-    /**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
-	private final JTextArea inputArea;
-    private final JTextArea outputArea;
+	private JTextArea inputArea;
+	private JTextArea outputArea;
+	private AES aes = new AES(128);
 
-    public View() {
-        super("AES - View");
+	public View() {
+		super("AES - View");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setLayout(new BorderLayout(10, 10));
 
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout(10, 10));
+		JLabel title = new JLabel("Cryptage AES 128 bits");
+		title.setHorizontalAlignment(JLabel.CENTER);
+		add(title, BorderLayout.NORTH);
 
-        JLabel title = new JLabel("Cryptage AES 128 bits");
-        title.setFont(new Font("Arial", Font.BOLD, 20));
-        title.setHorizontalAlignment(JLabel.CENTER);
-        add(title, BorderLayout.NORTH);
+		inputArea = new JTextArea(6, 40);
+		inputArea.setLineWrap(true);
+		outputArea = new JTextArea(6, 40);
+		outputArea.setLineWrap(true);
+		outputArea.setEditable(false);
 
-        JPanel center = new JPanel(new BorderLayout(10, 10));
-        center.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		JPanel center = new JPanel(new GridLayout(4, 1));
+		center.add(new JLabel("Message (ou texte hexadécimal à déchiffrer) :"));
+		center.add(new JScrollPane(inputArea));
+		center.add(new JLabel("Résultat :"));
+		center.add(new JScrollPane(outputArea));
+		add(center, BorderLayout.CENTER);
 
-        inputArea = new JTextArea();
-        inputArea.setLineWrap(true);
-        inputArea.setWrapStyleWord(true);
-        inputArea.setFont(new Font("Arial", Font.PLAIN, 14));
-        JScrollPane inputScroll = new JScrollPane(inputArea);
-        inputScroll.setPreferredSize(new Dimension(450, 150));
+		JPanel buttons = new JPanel();
+		JButton encryptButton = new JButton("Chiffrer");
+		JButton decryptButton = new JButton("Déchiffrer");
+		encryptButton.addActionListener(e -> chiffrer());
+		decryptButton.addActionListener(e -> dechiffrer());
+		buttons.add(encryptButton);
+		buttons.add(decryptButton);
+		add(buttons, BorderLayout.SOUTH);
 
-        outputArea = new JTextArea();
-        outputArea.setEditable(false);
-        outputArea.setLineWrap(true);
-        outputArea.setWrapStyleWord(true);
-        outputArea.setFont(new Font("Arial", Font.PLAIN, 14));
-        JScrollPane outputScroll = new JScrollPane(outputArea);
-        outputScroll.setPreferredSize(new Dimension(450, 150));
+		setSize(520, 450);
+		setLocationRelativeTo(null);
+		setVisible(true);
+	}
 
-        JPanel labels = new JPanel(new BorderLayout(10, 10));
-        labels.add(new JLabel("Message :"), BorderLayout.NORTH);
-        labels.add(inputScroll, BorderLayout.CENTER);
-        labels.add(new JLabel("Résultat :"), BorderLayout.SOUTH);
+	private void chiffrer() {
+		String message = inputArea.getText();
+		int[] bits = aes.crypte(message);
+		outputArea.setText(bitsVersHex(bits));
+	}
 
-        center.add(labels, BorderLayout.NORTH);
-        center.add(outputScroll, BorderLayout.CENTER);
-        add(center, BorderLayout.CENTER);
+	private void dechiffrer() {
+		String hex = inputArea.getText();
+		int[] bits = hexVersBits(hex);
+		outputArea.setText(aes.decrypte(bits));
+	}
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
-        JButton encryptButton = new JButton("Chiffrer");
-        JButton decryptButton = new JButton("Déchiffrer");
+	private String bitsVersHex(int[] bits) {
+		String hex = "";
+		for (int i = 0; i < bits.length; i += 4) {
+			int valeur = bits[i] * 8 + bits[i + 1] * 4 + bits[i + 2] * 2 + bits[i + 3];
+			hex = hex + Integer.toHexString(valeur);
+		}
+		return hex;
+	}
 
-        encryptButton.addActionListener(e -> chiffrer());
-        decryptButton.addActionListener(e -> dechiffrer());
+	private int[] hexVersBits(String hex) {
+		int[] bits = new int[hex.length() * 4];
+		for (int i = 0; i < hex.length(); i++) {
+			int valeur = Character.digit(hex.charAt(i), 16);
+			for (int b = 0; b < 4; b++) {
+				bits[i * 4 + b] = (valeur >> (3 - b)) & 1;
+			}
+		}
+		return bits;
+	}
 
-        buttons.add(encryptButton);
-        buttons.add(decryptButton);
-        add(buttons, BorderLayout.SOUTH);
-
-        setSize(520, 450);
-        setLocationRelativeTo(null);
-        setVisible(true);
-    }
-
-    private void chiffrer() {
-        try {
-            String message = inputArea.getText();
-            if (message == null || message.isEmpty()) {
-                outputArea.setText("");
-                return;
-            }
-
-            AES aes = new AES(128);
-            int[] bits = aes.stringToBits(message);
-            int[] cipher = aes.crypte(bits);
-            outputArea.setText(aes.bitsToString(cipher));
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void dechiffrer() {
-        try {
-            String message = inputArea.getText();
-            if (message == null || message.isEmpty()) {
-                outputArea.setText("");
-                return;
-            }
-
-            AES aes = new AES(128);
-            int[] bits = aes.stringToBits(message);
-            int[] plain = aes.decrypte(bits);
-            outputArea.setText(aes.bitsToString(plain));
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new View());
-    }
+	public static void main(String[] args) {
+		new View();
+	}
 }
